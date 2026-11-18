@@ -3,12 +3,15 @@ package main
 // fmt a inbuilt package which is use for printing and formating.
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/codewithdas/students-api/internal/config"
 ) 
@@ -29,6 +32,8 @@ func main() {
 		Addr: cfg.Addr,
 		Handler: router,
 	}
+
+	slog.Info("server started", slog.String("address", cfg.Addr))
 	// fmt.Println("server started")
 	fmt.Printf("server started %s", cfg.HTTPServer.Addr)
 
@@ -44,6 +49,17 @@ func main() {
 	} ()
 
 	<- done
+
+	slog.Info("shutting down the server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+
+	if err := server.Shutdown(ctx); err != nil{
+	   slog.Error("failed to shutdown server", slog.String("error",err.Error()))
+	}
+slog.Info("server shutdown succesfully")
 
 	
 }
