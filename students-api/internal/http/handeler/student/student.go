@@ -10,10 +10,13 @@ import (
 
 	"github.com/codewithdas/students-api/internal/types"
 	"github.com/codewithdas/students-api/internal/utils/response"
+	"github.com/go-playground/validator/v10"
+	// "github.com/go-playground/validator/v10/non-standard/validators"
 )
 
 func New() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
+		slog.Info("creating a student")
 
 		var student types.Student
 
@@ -21,17 +24,30 @@ func New() http.HandlerFunc {
 		if errors.Is(err, io.EOF) {
 			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("empty body")))
 			return 
-
 		}
 
-		slog.Info("creating a student")
+		if err != nil{
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError((err)))
+			return 
+		}
+
+		// request validation
+		if err := validator.New().Struct(student); err != nil {
+			validateErrs := err.(validator.ValidationErrors)
+			response.WriteJson(w, http.StatusBadRequest,response.ValidationError(validateErrs))
+			return 
+		}
+
+
+
+		
 		// w.Write([]byte("welcome to students api"))
 		response.WriteJson(w, http.StatusCreated,map[string]string{"success": "OK"})
 	}
 
 }
 
-
+// 8:02:25 tak hua tha tutorial
 // {
 //     "name":"Rakesh",
 //     "email":"rakesh@gmail.com",
